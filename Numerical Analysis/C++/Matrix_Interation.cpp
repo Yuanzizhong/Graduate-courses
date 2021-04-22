@@ -3,7 +3,7 @@
 using namespace std;
 #define m 3
 #define n 3
-#define w 1.8
+#define w 1.2
 
 //打印x
 void PrintSolve(double x[])
