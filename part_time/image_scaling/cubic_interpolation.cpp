@@ -23,16 +23,15 @@ float cal_Cubic_coeff(float x)
 		return 0.0;
 }
 
-Mat BiCubicInter(Mat& src, double sx, double sy)
+void cubic(Mat& src, Mat &dst,double sx, double sy)
 {
 	//获取输出图像的分辨率
 	int nRows = cvRound(src.rows * sx);
 	int nCols = cvRound(src.cols * sy);
 
 	int n = src.channels();
-
-	Mat resultImage(nRows, nCols, src.type());
-	if ( n== 1)
+	dst = cv::Mat(nRows, nCols, src.type());
+	if (n == 1)
 	{
 		//遍历图像
 		for (int i = 0; i < nRows; i++)
@@ -92,7 +91,7 @@ Mat BiCubicInter(Mat& src, double sx, double sy)
 					float dist_x3y3 = dist_x3 * dist_y3;
 
 					//由公式知f(i+u,j+v)=A*B*C知，即计算当前点的像素值
-					resultImage.at<Vec3b>(i, j) = (src.at<Vec3b>(x0, y0) * dist_x0y0 +
+					dst.at<Vec3b>(i, j) = (src.at<Vec3b>(x0, y0) * dist_x0y0 +
 						src.at<Vec3b>(x0, y1) * dist_x0y1 +
 						src.at<Vec3b>(x0, y2) * dist_x0y2 +
 						src.at<Vec3b>(x0, y3) * dist_x0y3 +
@@ -173,7 +172,7 @@ Mat BiCubicInter(Mat& src, double sx, double sy)
 
 					for (int k = 0; k < 3; k++) {
 						//由公式知f(i+u,j+v)=A*B*C知，即计算当前点的像素值
-						resultImage.at<Vec3b>(i, j)[k] = (src.at<Vec3b>(x0, y0)[k] * dist_x0y0 +
+						dst.at<Vec3b>(i, j)[k] = (src.at<Vec3b>(x0, y0)[k] * dist_x0y0 +
 							src.at<Vec3b>(x0, y1)[k] * dist_x0y1 +
 							src.at<Vec3b>(x0, y2)[k] * dist_x0y2 +
 							src.at<Vec3b>(x0, y3)[k] * dist_x0y3 +
@@ -191,18 +190,26 @@ Mat BiCubicInter(Mat& src, double sx, double sy)
 							src.at<Vec3b>(x3, y3)[k] * dist_x3y3);
 					}
 				}
+				else//边界值赋值为原点的像素
+				{
+					for (int k = 0; k < 3; k++) {
+						dst.at<Vec3b>(i, j)[k] = src.at<Vec3b>(xi,yi)[k];
+					}
+				}
 			}
 		}
 	}
 
-	return resultImage;
 }
 int main()
 {
 	//图像沿x轴和y轴放大的倍数
-	double sx = 0.5;
-	double sy = 0.5;
+	double sx = 3;
+	double sy = 3;
 
+	Mat dst;//创建目标图像
+
+	//读取源图像
 	Mat src = imread("E://flower.jpg");
 	if (!src.data)
 	{
@@ -210,17 +217,16 @@ int main()
 		return -1;
 	}
 
+
 	//创建自适应的窗口--读取原图像---展示原图像
 	namedWindow("src", CV_WINDOW_NORMAL);
 	imshow("src", src);
 
-	Mat dst = BiCubicInter(src, sx, sy);//调用函数、输出目标图像
+	cubic(src, dst, sx, sy);//调用函数、输出目标图像
 
-	//创建自适应的窗口--读取原图像---展示原图像
-	namedWindow("dst", CV_WINDOW_NORMAL);
-	imshow("src", dst);
-
-	imwrite("E://flower_hermite_low1.jpg", dst); // 保存图像dst到..
+	//展示原图像
+	imshow("DST", dst);
+	imwrite("E://flower_hermite_low.jpg", dst); // 保存图像dst到..
 
 	waitKey(0);
 	return 0;
